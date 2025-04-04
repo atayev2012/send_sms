@@ -1,47 +1,58 @@
-import argparse
 import tomllib
+from log_module import logger
+import sys
 
+config_toml_path = "config.toml"
 
 # read arguments from input
 class Args:
-    def __init__(self):
-        self.__load_args()
+    def __init__(self, args: list = sys.argv):
+        self.__load_args(args)
 
-    def __load_args(self):
-        parser = argparse.ArgumentParser(
-            prog="python3 send-sms.py",
-            description="send-sms - CLI client for sending SMS messages"
-        )
-        parser.add_argument("sender", type=str, help="Sender's phone number (without spaces)")
-        parser.add_argument("recipient", type=str, help="Recipient's phone number (without spaces)")
-        parser.add_argument("message", type=str, help="Message text")
+    @logger
+    def __load_args(self, args: list):
+        if len(args) < 4:
+            raise Exception("Not enough arguments passed through command line, should be at least 3 arguments!")
 
-        # read arguments
-        known_args, unknown_args = parser.parse_known_args()
+        self.sender = self.__validate_phone_number(args[1])
+        self.recipient = self.__validate_phone_number(args[2])
+        self.message = " ".join(args[3:])
 
-        # add all additional unknown arguments to message
-        known_args.message += f" {' '.join(unknown_args)}"
+    @logger
+    def __validate_phone_number(self, phone_number: str):
+        # removing + sign if contains
+        number = phone_number.strip().replace("+", "")
 
-        self.sender = known_args.sender
-        self.recipient = known_args.recipient
-        self.message = known_args.message
+        # removing brackets ()
+        number = number.replace("(", "")
+        number = number.replace(")", "")
+
+        #check if digit
+        if number.isdigit():
+            return f"+{number}"
+        else:
+            raise Exception(f"Invalid phone number: {phone_number}")
+
+    def __str__(self):
+        return f"{self.sender} {self.recipient} {self.message}"
 
 # read data from toml configuration file
 class Config:
-    def __init__(self, config_path: str = "config.toml"):
+    def __init__(self, config_path: str = config_toml_path):
         self.config_path = config_path
         self.__load_config()
 
+    @logger
     def __load_config(self):
         with open(self.config_path, "rb") as file:
             conf = tomllib.load(file)
         self.method = conf["request"]["method"]
         self.default_response_size = conf["request"]["default_response_size"]
-        self.timeout = conf["request"]["timeout"]
+        self.timeout = int(conf["request"]["timeout"])
         self.username = conf["user"]["username"]
         self.password = conf["user"]["password"]
         self.__convert_url(conf["request"]["url"])
-
+    @logger
     def __convert_url(self, url: str):
         if url.startswith("http:"):
             data = url[7:].split("/", 1)
@@ -52,18 +63,8 @@ class Config:
 
         self.path = "/" + data[1]
         if ":" in data[0]:
-            self.host, self.port = data[0].split(":")
+            self.host, port = data[0].split(":")
+            self.port = int(port)
         else:
             self.host = data[0]
             self.port = 80
-
-
-
-config = Config()
-# args = Args()
-
-
-if __name__ == "__main__":
-    print(config.host)
-    print(config.port)
-    print(config.path)
