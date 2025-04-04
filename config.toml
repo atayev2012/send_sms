@@ -1,0 +1,9 @@
+[user]
+username = "user"
+password = "pass"
+
+[request]
+url = "http://127.0.0.1:4010/send_sms"
+timeout = 10 # in seconds
+method = "POST"
+default_response_size = 4096 # in bytes (4kb)
