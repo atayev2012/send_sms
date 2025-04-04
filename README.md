@@ -24,7 +24,7 @@ A Python-based SMS sender that uses HTTP requests to send messages, with configu
    
 - For unit tests need to install additional pytest library:
    ```bash
-   pip install -r requirements
+   pip install -r requirements.txt
 
 ## ⚙️ Configuration
 - Edit config.toml in the project root:
